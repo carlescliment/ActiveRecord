@@ -1,0 +1,78 @@
+<?php
+
+
+
+/**
+ * Implements hook_schema().
+ */
+function activerecord_testing_schema() {
+  $schema = array();
+  $schema['planets'] = array(
+    'description' => 'The base table for planets',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a planet',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'Planet name',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'avg_orbital_speed' => array(
+        'description' => 'Average orbital speed, in km/s',
+        'type' => 'float',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'moons' => array(
+        'description' => 'Number of moons',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'explored' => array(
+        'description' => 'Number of moons',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array('u_planet_names' => array('name')),
+  );
+  $schema['moons'] = array(
+    'description' => 'The base table for moons',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a moon',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'Moon name',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'planet_id' => array(
+        'description' => 'Planet primary key',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array('u_moon_names' => array('name')),
+  );
+  return $schema;
+}

@@ -1,0 +1,10 @@
+name = Active Record testing module
+description = Tests activerecord module
+core = 7.x
+hidden = TRUE
+package = Database
+dependencies[] = activerecord
+files[] = tests/activerecord.test
+files[] = tests/activerecord_unitary.test
+files[] = tests/activerecord_relationships.test
+files[] = tests/metadata_extractor.test

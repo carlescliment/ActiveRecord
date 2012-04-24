@@ -1,0 +1,118 @@
+<?php
+
+class ActiveRecordRelationshipsTestCase extends DrupalWebTestCase {
+
+
+  public static function getInfo() {
+    return array(
+      'name' => 'ActiveRecord Relationships',
+      'description' => 'Exercise the ORM ActiveRecord relationships',
+      'group' => 'ActiveRecord',
+    );
+  }
+
+
+  public function setUp() {
+    parent::setUp('activerecord', 'activerecord_testing');
+    db_query("INSERT INTO {planets} (name, avg_orbital_speed, moons, explored) VALUES ('Earth', 12.2, 1, 1)");
+    db_query("INSERT INTO {moons} (name, planet_id) VALUES ('Moon', 1)");
+  }
+
+  public function test_should_get_children_from_parent() {
+    // Arrange
+    $planet = Planet::load(1);
+
+    // Act
+    $moons = $planet->moons();
+
+    // Assert
+    $this->assertEqual(count($moons), 1);
+    $this->assertEqual($moons[0]->name, 'Moon');
+  }
+
+  public function test_should_get_parent_from_children() {
+    // Arrange
+    $moon = Moon::load(1);
+
+    // Act
+    $planet = $moon->planet();
+
+    // Assert
+    $this->assertEqual($planet->name, 'Earth');
+  }
+
+
+  public function test_should_add_children() {
+    // Arrange
+    $planet = new Planet(array('name' => 'Jupiter'));
+
+    // Act
+    $planet->addMoon(new Moon(array('name' => 'Ananke')));
+
+    // Assert
+    $moons = $planet->moons();
+    $this->assertEqual(count($moons), 1);
+    $this->assertEqual($moons[0]->name, 'Ananke');
+  }
+
+
+  public function test_should_save_children_when_saving_a_new_instance() {
+   // Arrange
+   $planet = new Planet(array('name' => 'Jupiter'));
+   $planet->addMoon(new Moon(array('name' => 'Ananke')));
+   $planet->addMoon(new Moon(array('name' => 'Praxidike')));
+
+   // Act
+   $planet->save();
+
+   // Assert
+   $loaded_planet = Planet::load($planet->id);
+   $this->assertEqual(count($loaded_planet->moons()), 2);
+  }
+
+
+  public function test_should_not_destroy_children_when_updating_an_instance() {
+    // Arrange
+    $planet = Planet::load(1);
+
+    // Act
+    $planet->save();
+
+    // Assert
+    $planet = Planet::load(1);
+    $this->assertEqual(count($planet->moons()), 1);
+  }
+
+  public function test_should_update_children_when_adding_on_existing() {
+    // Arrange
+    $planet = Planet::load(1);
+
+    // Act
+    $planet->addMoon(new Moon(array('name' => 'Moon2')));
+    $planet->save();
+
+    // Assert
+    $this->assertEqual(count($planet->moons()), 2);
+    $planet = Planet::load(1);
+    $this->assertEqual(count($planet->moons()), 2);
+  }
+
+
+  public function test_should_delete_children() {
+    // Arrange
+    $planet = Planet::load(1);
+
+    // Act
+    $planet->deleteMoons();
+
+    // Assert
+    $this->assertEqual(count($planet->moons()), 0);
+    $planet = Planet::load(1);
+    $this->assertEqual(count($planet->moons()), 0);
+  }
+
+
+
+
+
+}

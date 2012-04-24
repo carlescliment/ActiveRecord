@@ -1,0 +1,287 @@
+<?php
+
+require_once dirname(__FILE__) . '/includes/custom_annotations.php';
+require_once dirname(__FILE__) . '/includes/MetadataExtractor.php';
+
+/**
+ * This class provides an object-oriented relational mapper based on the ActiveRecord pattern.
+ * It is heavily bound to drupal schema, so you'll need to define your tables properly in order to
+ * successfully handle ActiveRecord instances.
+ *
+ * Defining models and databases
+ * ---------------------------------------------------
+ * When you define a class with, its name MUST be respected in the table hosting its instances. For example,
+ * if you define a class 'Car', then the table in the schema MUST be named "cars". If you define a multi-word class like
+ * "CarDriver", the table in the database must be named "car_drivers", and so on (replacing CamelCase with underscores
+ * and adding an 's' at the end).
+ * You are obligued to include a serial primary key, which must be named "id". If you need to add other unique identifiers
+ * to your models, add them via unique keys.
+ *
+ * Loading models
+ * ---------------------------------------------------
+ * To load an instance, you can use the static method load().
+ * $car = Car::load($some_id)
+ *
+ * If you want to load an instance by a non-primary key field, you should use loadBy() which accepts an array with the
+ * selected chriteria.
+ * $car = Car::loadBy(array('model' => 'Celica'));
+ *
+ * To load many instances, you can use all(), which results in an array of instances.
+ * $cars = Car::all()
+ * You can filter by some fields
+ * $cars = Car::all(array('max_passengers' => 4, 'diesel' => 0, 'constructor' => 'Ford'));
+ * And you can sort them
+ * $cars = Car::all(array('constructor' => 'Ford'), array('released' => 'asc', 'max_speed' => 'desc'));
+ *
+ * Instantiating models
+ * ---------------------------------------------------
+ * To instantiate a class, just pass an array with the instance properties to the constructor.
+ * $car_data = array('model' => 'C3', 'constructor' => 'Citröen', 'max_speed' => 170);
+ * $car = new Car($car_data);
+ *
+ * Saving/updating models
+ * ---------------------------------------------------
+ * Once you've an instance, storing it is straight-forward.
+ * $car->save();
+ * You don't have to worry about saving a new item or an existing one. ActiveRecord will do this for you, and will 
+ * populate the instance's id in new instances being saved for first time.
+ *
+ * Deleting models
+ * ---------------------------------------------------
+ * To delete an object, just make use of the method delete(). It will be deleted from the database, but you will obtain
+ * an annonymous instance, so you could do something like:
+ * $instance->delete()->save(); // Uh, ok, may be doing so is not very useful.
+ * You can call the method delete() on a non-saved instance, but it will do nothing.
+ *
+ *
+ * Defining relationships
+ * ---------------------------------------------------
+ * ONE TO MANY: This is the only relationship implemented at the time. To define relationships between models you will
+ * need to use annotations. For example, to define a relationship between a Mother and her Son, you should code something
+ * like this:
+ *
+ * /**
+ *  * @HasMany('Son')
+ *  *\/
+ * class Mother extends ActiveRecord {}
+ *
+ * /**
+ *  * @BelongsTo('Mother')
+ *  *\/
+ * class Son extends ActiveRecord {}
+ *
+ * Automagically, given an instance of Mother, you could do the next without implementing additional logic:
+ * $sons = $mother->sons(); // You'll obtain an array of this mother sons.
+ * $mother = $son->mother(); // You'll obtain a son's mother.
+ * $mother->addSon($son); // Bounds a son to the mother instance
+ * $mother->save(); // Will save/update mother and her respective sons.
+ * $mother->delete(); // Depending on how is your schema definition, it will delete children, if any (cascade) or make
+ *                    // them orphan.
+ * $mother->deleteSons(); // Will delete all its sons.
+ *
+ *
+ * @todo Keep working on model relationships (one-to-one, many-to-many)
+ * @todo eager loading/lazy loading control
+ * @see http://books.google.es/books?id=FyWZt5DdvFkC&lpg=PA1&dq=Patterns+of+Enterprise+Application+Architecture+by+Martin+Fowler&pg=PT187&redir_esc=y#v=onepage&q=active%20record&f=false
+ */
+abstract class ActiveRecord {
+
+  public $id = NULL;
+
+
+  /**
+   * @param array $attributes Optional instance attributes.
+   */
+  public function __construct($attributes = array()) {
+    foreach ($attributes as $key => $value) {
+      $this->$key = $value;
+    }
+    if (MetadataExtractor::hasChildren($this)) {
+      $children_class = MetadataExtractor::getChildrenClass($this);
+      $children_attribute = MetadataExtractor::getChildrenAttributeFromClassName($children_class);
+      $this->$children_attribute = NULL;
+    }
+  }
+
+
+  public function __toString() {
+    return serialize($this);
+  }
+
+
+  /**
+   * Dynamically intercepts calls to unexisting methods. Used to handle relationships.
+   */
+  public function __call($method, $arguments) {
+    $children_function = MetadataExtractor::getChildrenFunctionName($this);
+    $add_child_function = MetadataExtractor::getAddChildrenFunctionName($this);
+    $delete_children_function = MetadataExtractor::getDeleteChildrenFunctionName($this);
+    $parent_function = MetadataExtractor::getParentFunctionName($this);
+    switch ($method) {
+      case $children_function:
+        return $this->getChildren();
+      case $parent_function:
+        return $this->getParent();
+      case $add_child_function:
+        return $this->addChild($arguments[0]);
+      case $delete_children_function:
+        return $this->deleteChildren();
+    }
+    throw new Exception('Call to undefined method/class function: ' . $method);
+  }
+
+
+  /**
+   * @param int $id Instance identifier.
+   * @return a subclassed instance of ActiveRecord or FALSE if not found.
+   */
+  public static function load($id) {
+    $query = self::_buildLoadQuery(array('id' => $id));
+    return $query->execute()->fetch();
+  }
+
+
+  /**
+   * @param array $parameters Key-value array of fields to filter by.
+   * @param array $order Key-value array of fields to order by.
+   * @return array of instances found
+   */
+  public static function all($parameters = array(), $order = array()) {
+    $query = self::_buildLoadQuery($parameters, $order);
+    return $query->execute()->fetchAll();
+  }
+
+
+  /**
+   * @param array $parameters Key-value array of fields to load by.
+   * @return a subclassed instance of ActiveRecord or FALSE if not found.
+   */
+  public static function loadBy(array $parameters) {
+    $query = self::_buildLoadQuery($parameters);
+    return $query->execute()->fetch();
+  }
+
+
+  /**
+   * Deletes the instance in the database
+   * @return ActiveRecord
+   */
+  public function delete() {
+    if ($this->id) {
+      $table = MetadataExtractor::getTable($this);
+      db_delete($table)->condition('id', $this->id)->execute();
+      $this->id = NULL;
+    }
+    return $this;
+  }
+
+
+  /**
+   * @return a subclassed instance of ActiveRecord or FALSE if not saved.
+   */
+  public function save() {
+    $table = MetadataExtractor::getTable($this);
+    if (!is_null($this->id)) {
+      $success = drupal_write_record($table, $this, 'id');
+    }
+    else {
+      $success = drupal_write_record($table, $this);
+    }
+    if (MetadataExtractor::hasChildren($this)) {
+      $this->saveChildren();
+    }
+    return $success ? $this : FALSE;
+  }
+
+
+  /**
+   * @param array $conditions A keyed array of conditions to append to the WHERE clause
+   * @param array $order A keyed array of conditions to append to the ORDER BY clause
+   * @return a query object.
+   */
+  private static function _buildLoadQuery($conditions = array(), $order = array()) {
+    $class_name = get_called_class();
+    $table = MetadataExtractor::getTableFromClassName($class_name);
+    $query = db_select($table, 't', array('fetch' => $class_name));
+    foreach ($conditions as $key => $value) {
+      $query->condition("t.$key", $value);
+    }
+    foreach ($order as $key => $value) {
+      $query->orderBy($key, strtoupper($value));
+    }
+    return $query->fields('t');
+  }
+
+
+  /**
+   * @return an array of children
+   */
+  private function getChildren() {
+    $child = MetadataExtractor::getChildrenClass($this);
+    $children_attribute = MetadataExtractor::getChildrenAttributeFromClassName($child);
+    if (is_null($this->$children_attribute)) {
+      $children_class = MetadataExtractor::getChildrenClass($this);
+      $id_field = MetadataExtractor::getIdField($this);
+      $this->$children_attribute = $children_class::all(array($id_field => $this->id));
+    }
+    return $this->$children_attribute;
+  }
+
+
+  /**
+   * @param ActiveRecord child to add.
+   * @return ActiveRecord instance
+   */
+  private function addChild(ActiveRecord $child) {
+    $children_class = MetadataExtractor::getClass($child);
+    $children_attribute = MetadataExtractor::getChildrenAttributeFromClassName($children_class);
+    $container = &$this->$children_attribute;
+    if (is_null($container)) {
+      $children_method = MetadataExtractor::getChildrenFunctionName($this);
+      $container = $this->$children_method();
+    }
+    $container[] = $child;
+    return $this;
+  }
+
+
+  /**
+   * Deletes all instance children.
+   * @return ActiveRecord instance
+   */
+  private function deleteChildren() {
+    $children_class = MetadataExtractor::getChildrenClass($this);
+    $table = MetadataExtractor::getTableFromClassName($children_class);
+    $parent_attribute = MetadataExtractor::getIdField($this);
+    $children_attribute = MetadataExtractor::getChildrenAttribute($this);
+    db_delete($table)->condition($parent_attribute, $this->id)->execute();
+    $this->$children_attribute = array();
+    return $this;
+  }
+
+
+  /**
+   * @return the parent instance
+   */
+  private function getParent() {
+    $parent_class = MetadataExtractor::getParentClass($this);
+    $id_field = MetadataExtractor::getParentIdField($this);
+    return $parent_class::load($this->$id_field);
+  }
+
+
+  private function saveChildren() {
+    $child = MetadataExtractor::getChildrenClass($this);
+    $children_attribute = MetadataExtractor::getChildrenAttributeFromClassName($child);
+    if (is_null($this->$children_attribute)) {
+      return;
+    }
+    foreach ($this->$children_attribute as $child_instance) {
+      $parent_attribute = MetadataExtractor::getParentIdField($child_instance);
+      $child_instance->$parent_attribute = $this->id;
+      $child_instance->save();
+    }
+    return FALSE;
+  }
+
+}

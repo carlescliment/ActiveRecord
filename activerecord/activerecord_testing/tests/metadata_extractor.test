@@ -1,0 +1,101 @@
+<?php
+
+
+class Example extends ActiveRecord {}
+class LongerClassNameExample extends ActiveRecord {}
+
+
+/**
+ * @HasMany('Child')
+ */
+class Mother extends ActiveRecord {}
+
+/**
+ * @BelongsTo('Mother')
+ */
+class Child extends ActiveRecord {}
+
+
+
+class MetadataExtractorTestCase extends DrupalUnitTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'MetadataExtractor',
+      'description' => 'Exercise the MetaDataExtractorClass',
+      'group' => 'ActiveRecord',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp('activerecord');
+  }
+
+  public function test_should_return_model_table() {
+    // Arrange
+    $object = new Example();
+    $longer_object = new LongerClassNameExample();
+
+    // Act
+    $table = MetadataExtractor::getTable($object);
+    $longer_table = MetadataExtractor::getTable($longer_object);
+
+    // Assert
+    $this->assertEqual($table, 'examples');
+    $this->assertEqual($longer_table, 'longer_class_name_examples');
+  }
+
+  
+  public function test_should_return_children_class_in_one_to_many() {
+    // Arrange
+    $mother = new Mother();
+
+    // Act
+    $children_class = MetadataExtractor::getChildrenClass($mother);
+
+    // Arrange
+    $this->assertEqual($children_class, 'Child');
+  }
+
+
+
+
+  public function test_should_return_children_function_in_one_to_many() {
+    // Arrange
+    $mother = new Mother();
+
+    // Act
+    $children_function = MetadataExtractor::getChildrenFunctionName($mother);
+
+    // Arrange
+    $this->assertEqual($children_function, 'childs');
+  }
+
+
+
+  public function test_should_return_parent_function_in_one_to_many() {
+    // Arrange
+    $child = new Child();
+
+    // Act
+    $parent_function = MetadataExtractor::getParentFunctionName($child);
+
+    // Arrange
+    $this->assertEqual($parent_function, 'mother');
+  }
+
+
+  public function test_should_return_add_children_function() {
+    // Arrange
+    $parent = new Mother();
+
+    // Act
+    $add_children_function = MetadataExtractor::getAddChildrenFunctionName($parent);
+
+    // Arrange
+    $this->assertEqual($add_children_function, 'addChild');
+  }
+
+
+
+}

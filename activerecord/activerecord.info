@@ -1,0 +1,4 @@
+name = Active Record
+description = Provides an ORM over Drupal
+core = 7.x
+package = Database

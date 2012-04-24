@@ -1,0 +1,173 @@
+<?php
+
+class ActiveRecordTestCase extends DrupalWebTestCase {
+
+
+  public static function getInfo() {
+    return array(
+      'name' => 'ActiveRecord',
+      'description' => 'Exercise the ORM ActiveRecord',
+      'group' => 'ActiveRecord',
+    );
+  }
+
+
+  public function setUp() {
+    parent::setUp('activerecord', 'activerecord_testing');
+    $this->planet = $this->planetInstance('Earth');
+    $this->planet->save();
+  }
+
+  public function test_should_be_persistable() {
+    // Arrange
+    $planet = $this->planetInstance('Mercury');
+
+    // Act
+    $planet->save();
+
+    // Assert
+    $query = db_query('SELECT * FROM {planets} WHERE name=:name', array(':name' => 'Mercury'), array('fetch' => 'Planet'));
+    $loaded_planet = $query->fetch();
+    $this->assertEqual($loaded_planet, $planet);
+  }
+
+
+  public function test_should_be_updatable() {
+    // Arrange
+    $this->planet->avg_orbital_speed = '29.81';
+
+    // Act
+    $this->planet->save();
+
+    // Assert
+    $result = db_query('SELECT * FROM {planets}', array(), array('fetch' => 'Planet'));
+    $loaded_planet = $result->fetch();
+    $this->assertEqual($loaded_planet, $this->planet);
+  }
+
+
+  public function test_should_be_loadable() {
+    // Arrange
+    // setUp
+    // Act
+    $loaded_planet = Planet::load($this->planet->id);
+
+    // Assert
+    $this->assertEqual($loaded_planet, $this->planet);
+  }
+
+
+  public function test_should_return_false_when_loading_unexisting_instance() {
+    // Arrange
+    // setUp
+    // Act
+    $loaded_planet = Planet::load(666);
+
+    // Assert
+    $this->assertFalse($loaded_planet);
+  }
+
+
+  public function test_should_load_all() {
+    // Arrange
+    // setUp
+
+    $this->planetInstance('Mercury')->save();
+    $planets = Planet::all();
+    $this->assertEqual(count($planets), 2);
+    $this->assertEqual($planets[0]->name, 'Earth');
+    $this->assertEqual($planets[1]->name, 'Mercury');
+  }
+
+
+  public function test_should_filter_by_one_field() {
+    // Arrange
+    $this->planetInstance('Mercury')->save();
+
+    // Act
+    $planets = Planet::all(array('name' => 'Mercury'));
+
+    // Assert
+    $this->assertEqual(count($planets), 1);
+    $this->assertEqual($planets[0]->name, 'Mercury');
+  }
+
+
+  public function test_should_filter_by_many_fields() {
+    // Arrange
+    $this->planetInstance('Mercury')->save();
+    $this->planetInstance('Venus', '46.12')->save();
+    $this->planetInstance('Mars', '46.12', 1)->save();
+
+    // Act
+    $planets = Planet::all(array('explored' => 0, 'moons' => 1));
+
+    // Assert
+    $this->assertEqual(count($planets), 1);
+    $this->assertEqual($planets[0]->name, 'Mars');
+  }
+
+  public function test_should_be_loadable_by_one_field() {
+    // Arrange
+    // setUp
+    // Act
+    $loaded_planet = Planet::loadBy(array('moons' => 0));
+
+    // Assert
+    $this->assertEqual($loaded_planet, $this->planet);
+  }
+
+
+  public function test_should_be_loadable_by_many_fields() {
+    // Arrange
+    // setUp
+    // Act
+    $loaded_planet = Planet::loadBy(array('moons' => 0, 'name' => 'Earth'));
+
+    // Assert
+    $this->assertEqual($loaded_planet, $this->planet);
+  }
+
+
+  public function test_filtering_should_be_sortable() {
+    // Arrange
+    $this->planetInstance('Mercury')->save();
+    $this->planetInstance('Venus', '46.12')->save();
+    $this->planetInstance('Mars', '46.12', 1, 1)->save();
+
+    // Act
+    $planets = Planet::all(array(), array('explored' => 'desc', 'name' => 'asc'));
+
+    // Assert
+    $this->assertEqual(count($planets), 4);
+    $this->assertEqual($planets[0]->name, 'Mars');
+    $this->assertEqual($planets[1]->name, 'Earth');
+    $this->assertEqual($planets[2]->name, 'Mercury');
+    $this->assertEqual($planets[3]->name, 'Venus');
+  }
+
+
+  public function test_should_be_deleteable() {
+    // Arrange
+    $id = $this->planet->id;
+
+    // Act
+    $this->planet->delete();
+
+    // Assert
+    $planet = Planet::load($id);
+    $this->assertFalse($planet);
+  }
+
+
+  private function planetInstance($name, $avg = '29.78', $moons = 0, $explored = 0) {
+    $planet_data = array(
+      'name' => $name,
+      'avg_orbital_speed' => $avg,
+      'moons' => $moons,
+      'explored' => $explored,
+    );
+    return new Planet($planet_data);
+  }
+
+}

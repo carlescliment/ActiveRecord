@@ -1,0 +1,35 @@
+<?php
+
+class ActiveRecordUnitaryTestCase extends DrupalUnitTestCase {
+
+
+  public static function getInfo() {
+    return array(
+      'name' => 'ActiveRecord Unitary',
+      'description' => 'Exercise the ActiveRecord class',
+      'group' => 'ActiveRecord',
+    );
+  }
+
+
+  public function setUp() {
+    parent::setUp('activerecord');
+  }
+
+
+  public function testItShouldBeInstantiable() {
+    // Arrange
+    $planet_data = array(
+      'name' => 'Earth',
+      'avg_orbital_speed' => '29.78',
+    );
+    // Act
+    $planet = new Planet($planet_data);
+
+    // Assert
+    $this->assertEqual($planet->name, 'Earth');
+    $this->assertEqual($planet->avg_orbital_speed, '29.78');
+    $this->assertFalse(isset($planet->id));
+  }
+
+}

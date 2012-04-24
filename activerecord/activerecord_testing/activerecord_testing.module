@@ -1,0 +1,11 @@
+<?php
+
+/**
+ * @HasMany('Moon')
+ */
+class Planet extends ActiveRecord {}
+
+/**
+ * @BelongsTo('Planet')
+ */
+class Moon extends ActiveRecord {}
