@@ -118,4 +118,5 @@ $form = drupal_get_form('activerecord', $myobject);
 
 * TODO: Keep working on model relationships (one-to-one, many-to-many)
 * TODO: eager loading/lazy loading control
+* TODO: Keep working on the form builder
 * see: http://books.google.es/books?id=FyWZt5DdvFkC&lpg=PA1&dq=Patterns+of+Enterprise+Application+Architecture+by+Martin+Fowler&pg=PT187&redir_esc=y#v=onepage&q=active%20record&f=false
