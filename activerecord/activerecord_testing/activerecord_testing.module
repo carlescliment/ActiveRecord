@@ -9,3 +9,26 @@ class Planet extends ActiveRecord {}
  * @BelongsTo('Planet')
  */
 class Moon extends ActiveRecord {}
+
+
+class Comet extends ActiveRecord {}
+
+
+function activerecord_testing_menu() {
+  $items['activerecord_testing/formbuilder/comet'] = array(
+    'page callback' => 'activerecord_testing_comet_page',
+    'access arguments' => array('access content'),
+  );
+  $items['activerecord_testing/formbuilder/comet/%'] = array(
+    'page callback' => 'activerecord_testing_comet_page',
+    'page arguments' => array(3),
+    'access arguments' => array('access content'),
+  );
+  return $items;
+}
+
+
+function activerecord_testing_comet_page($comet_id = NULL) {
+  $comet = $comet_id ? Comet::load($comet_id) : new Comet;
+  return drupal_get_form('activerecord_form', $comet);
+}

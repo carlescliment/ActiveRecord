@@ -8,3 +8,4 @@ files[] = tests/activerecord.test
 files[] = tests/activerecord_unitary.test
 files[] = tests/activerecord_relationships.test
 files[] = tests/metadata_extractor.test
+files[] = tests/formbuilder.test

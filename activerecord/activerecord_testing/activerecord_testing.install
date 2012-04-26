@@ -74,5 +74,31 @@ function activerecord_testing_schema() {
     'primary key' => array('id'),
     'unique keys' => array('u_moon_names' => array('name')),
   );
+  $schema['comets'] = array(
+    'description' => 'The base table for moons',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a comet',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'Comet name',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+        'ar_formbuilder' => array('required' => TRUE),
+      ),
+      'description' => array(
+        'description' => 'Comet description',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array('u_comet_names' => array('name')),
+  );
   return $schema;
 }
