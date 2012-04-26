@@ -116,6 +116,6 @@ $form = drupal_get_form('activerecord', $myobject);
 ¡As easy as it sounds!
 
 
-TODO: Keep working on model relationships (one-to-one, many-to-many)
-TODO: eager loading/lazy loading control
-@see http://books.google.es/books?id=FyWZt5DdvFkC&lpg=PA1&dq=Patterns+of+Enterprise+Application+Architecture+by+Martin+Fowler&pg=PT187&redir_esc=y#v=onepage&q=active%20record&f=false
+* TODO: Keep working on model relationships (one-to-one, many-to-many)
+* TODO: eager loading/lazy loading control
+* see: http://books.google.es/books?id=FyWZt5DdvFkC&lpg=PA1&dq=Patterns+of+Enterprise+Application+Architecture+by+Martin+Fowler&pg=PT187&redir_esc=y#v=onepage&q=active%20record&f=false
