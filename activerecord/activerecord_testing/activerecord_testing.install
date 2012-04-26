@@ -29,15 +29,8 @@ function activerecord_testing_schema() {
         'unsigned' => TRUE,
         'not null' => FALSE,
       ),
-      'moons' => array(
-        'description' => 'Number of moons',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
       'explored' => array(
-        'description' => 'Number of moons',
+        'description' => 'Explored or not',
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
