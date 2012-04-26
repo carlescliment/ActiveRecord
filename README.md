@@ -16,7 +16,9 @@ to your models, add them via unique keys.
 Loading models
 ---------------------------------------------------
 To load an instance, you can use the static method load().
+```php
 $car = Car::load($some_id)
+```
 
 If you want to load an instance by a non-primary key field, you should use loadBy() which accepts an array with the
 selected chriteria.
