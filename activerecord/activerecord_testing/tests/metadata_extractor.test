@@ -1,23 +1,7 @@
 <?php
 
+class MetadataExtractorTestCase extends DrupalWebTestCase {
 
-class Example extends ActiveRecord {}
-class LongerClassNameExample extends ActiveRecord {}
-
-
-/**
- * @HasMany('Child')
- */
-class Mother extends ActiveRecord {}
-
-/**
- * @BelongsTo('Mother')
- */
-class Child extends ActiveRecord {}
-
-
-
-class MetadataExtractorTestCase extends DrupalUnitTestCase {
 
   public static function getInfo() {
     return array(
@@ -27,75 +11,57 @@ class MetadataExtractorTestCase extends DrupalUnitTestCase {
     );
   }
 
+
   public function setUp() {
-    parent::setUp('activerecord');
+    parent::setUp('activerecord', 'activerecord_testing');
   }
 
-  public function test_should_return_model_table() {
-    // Arrange
-    $object = new Example();
-    $longer_object = new LongerClassNameExample();
 
-    // Act
-    $table = MetadataExtractor::getTable($object);
-    $longer_table = MetadataExtractor::getTable($longer_object);
-
-    // Assert
-    $this->assertEqual($table, 'examples');
-    $this->assertEqual($longer_table, 'longer_class_name_examples');
-  }
-
-  
   public function test_should_return_children_class_in_one_to_many() {
     // Arrange
-    $mother = new Mother();
+    $planet = new Planet();
 
     // Act
-    $children_class = MetadataExtractor::getChildrenClass($mother);
+    $moon_class = MetadataExtractor::getChildrenClass($planet);
 
     // Arrange
-    $this->assertEqual($children_class, 'Child');
+    $this->assertEqual($moon_class, 'Moon');
   }
-
-
 
 
   public function test_should_return_children_function_in_one_to_many() {
     // Arrange
-    $mother = new Mother();
+    $planet = new Planet();
 
     // Act
-    $children_function = MetadataExtractor::getChildrenFunctionName($mother);
+    $moons_function = MetadataExtractor::getChildrenFunctionName($planet);
 
     // Arrange
-    $this->assertEqual($children_function, 'childs');
+    $this->assertEqual($moons_function, 'moons');
   }
-
 
 
   public function test_should_return_parent_function_in_one_to_many() {
     // Arrange
-    $child = new Child();
+    $moon = new Moon();
 
     // Act
-    $parent_function = MetadataExtractor::getParentFunctionName($child);
+    $planet_function = MetadataExtractor::getParentFunctionName($moon);
 
     // Arrange
-    $this->assertEqual($parent_function, 'mother');
+    $this->assertEqual($planet_function, 'planet');
   }
 
 
   public function test_should_return_add_children_function() {
     // Arrange
-    $parent = new Mother();
+    $planet = new Planet();
 
     // Act
-    $add_children_function = MetadataExtractor::getAddChildrenFunctionName($parent);
+    $add_children_function = MetadataExtractor::getAddChildrenFunctionName($planet);
 
     // Arrange
-    $this->assertEqual($add_children_function, 'addChild');
+    $this->assertEqual($add_children_function, 'addMoon');
   }
-
-
 
 }

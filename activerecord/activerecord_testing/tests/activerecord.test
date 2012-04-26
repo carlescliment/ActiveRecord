@@ -18,22 +18,6 @@ class ActiveRecordTestCase extends DrupalWebTestCase {
     $this->planet->save();
   }
 
-  public function test_should_be_instantiable() {
-    // Arrange
-    $planet_data = array(
-      'name' => 'Earth',
-      'avg_orbital_speed' => '29.78',
-    );
-    $this->debug('hi');
-
-    // Act
-    $planet = new Planet($planet_data);
-
-    // Assert
-    $this->assertEqual($planet->name, 'Earth');
-    $this->assertEqual($planet->avg_orbital_speed, '29.78');
-    $this->assertFalse(isset($planet->id));
-  }
 
   public function test_should_be_persistable() {
     // Arrange
@@ -123,6 +107,7 @@ class ActiveRecordTestCase extends DrupalWebTestCase {
     $this->assertEqual(count($planets), 1);
     $this->assertEqual($planets[0]->name, 'Mars');
   }
+
 
   public function test_should_be_loadable_by_one_field() {
     // Arrange
