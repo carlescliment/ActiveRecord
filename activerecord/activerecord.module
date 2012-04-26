@@ -1,5 +1,29 @@
 <?php
 
+require_once dirname(__FILE__) . '/includes/addendum/annotations.php';
+
+
+function activerecord_form($form, &$form_state, $instance) {
+  if (isset($instance->id)) {
+    $form_state['activerecord_id'] = $instance->id;
+  }
+  $form_state['activerecord_class_name'] = MetadataExtractor::getClass($instance);
+  return ARFormBuilder::build($instance);
+}
+
+
+function activerecord_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+  if (isset($form_state['activerecord_id'])) {
+    $values['id'] = $form_state['activerecord_id'];
+  }
+  debug($values);
+  $class_name = $form_state['activerecord_class_name'];
+  $instance = new $class_name($values);
+  debug($instance);
+  $instance->save();
+}
+
 /**
  * This class provides an object-oriented relational mapper based on the ActiveRecord pattern.
  * It is heavily bound to drupal schema, so you'll need to define your tables properly in order to
@@ -111,10 +135,18 @@ abstract class ActiveRecord {
     foreach ($attributes as $key => $value) {
       $this->$key = $value;
     }
+    // Initialize children attribute if needed
     if (MetadataExtractor::hasChildren($this)) {
       $children_class = MetadataExtractor::getChildrenClass($this);
       $children_attribute = MetadataExtractor::getChildrenAttributeFromClassName($children_class);
       $this->$children_attribute = NULL;
+    }
+    // Initialize parent attribute if needed
+    if (MetadataExtractor::hasParent($this)) {
+      $parent_attribute = MetadataExtractor::getParentIdField($this);
+      if (!isset($this->$parent_attribute)) {
+        $this->$parent_attribute = NULL;
+      }
     }
   }
 

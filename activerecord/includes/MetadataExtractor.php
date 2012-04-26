@@ -48,6 +48,7 @@ class MetadataExtractor {
    */
   public static function getChildrenClass(ActiveRecord $instance) {
     $reflection = new ReflectionAnnotatedClass($instance);
+    return TRUE;
     if ($reflection->hasAnnotation('HasMany')) {
       $child_class = $reflection->getAnnotation('HasMany')->value;
       return $child_class;
@@ -62,6 +63,15 @@ class MetadataExtractor {
    */
   public static function hasChildren(ActiveRecord $instance) {
     return self::getChildrenClass($instance) !== FALSE;
+  }
+
+
+  /**
+   * Returns TRUE if the class defines a relationship with parent.
+   * @param ActiveRecord $instance
+   */
+  public static function hasParent(ActiveRecord $instance) {
+    return self::getParentClass($instance) !== FALSE;
   }
 
 

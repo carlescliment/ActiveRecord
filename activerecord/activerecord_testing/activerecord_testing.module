@@ -24,6 +24,14 @@ function activerecord_testing_menu() {
     'page arguments' => array(3),
     'access arguments' => array('access content'),
   );
+  $items['activerecord_testing/formbuilder/planet'] = array(
+    'page callback' => 'activerecord_testing_planet_page',
+    'access arguments' => array('access content'),
+  );
+  $items['activerecord_testing/formbuilder/moon'] = array(
+    'page callback' => 'activerecord_testing_moon_page',
+    'access arguments' => array('access content'),
+  );
   return $items;
 }
 
@@ -31,4 +39,16 @@ function activerecord_testing_menu() {
 function activerecord_testing_comet_page($comet_id = NULL) {
   $comet = $comet_id ? Comet::load($comet_id) : new Comet;
   return drupal_get_form('activerecord_form', $comet);
+}
+
+
+function activerecord_testing_planet_page($planet_id = NULL) {
+  $planet = $planet_id ? Planet::load($planet_id) : new Planet;
+  return drupal_get_form('activerecord_form', $planet);
+}
+
+
+function activerecord_testing_moon_page($moon_id = NULL) {
+  $moon = $moon_id ? Moon::load($moon_id) : new Moon;
+  return drupal_get_form('activerecord_form', $moon);
 }
