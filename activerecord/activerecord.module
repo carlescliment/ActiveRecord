@@ -17,10 +17,8 @@ function activerecord_form_submit($form, &$form_state) {
   if (isset($form_state['activerecord_id'])) {
     $values['id'] = $form_state['activerecord_id'];
   }
-  debug($values);
   $class_name = $form_state['activerecord_class_name'];
   $instance = new $class_name($values);
-  debug($instance);
   $instance->save();
 }
 
