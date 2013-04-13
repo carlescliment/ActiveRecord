@@ -11,6 +11,8 @@ and adding an 's' at the end).
 You are obligued to include a serial primary key, which must be named "id". If you need to add other unique identifiers
 to your models, add them via unique keys.
 
+Please, take a quick look into the .install and .module files under the testing submodule inside this project and you will easily understand how it works.
+
 Loading models
 ---------------------------------------------------
 To load an instance, you can use the static method load().
